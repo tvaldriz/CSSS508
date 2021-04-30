@@ -1,0 +1,98 @@
+---
+title: "CSSS508: HW 1: R Markdown"
+author: "Thomas Valdriz"
+date: "4/5/2021"
+output:
+  html_document:
+    theme: journal
+---
+##### Prompt:
+###### *Write up a .Rmd file showing some exploratory analyses of the Swiss fertility data. Upload both the .Rmd file and the .html file to Canvas. You must upload both for credit.*
+
+###### *Mix in-line R calculations, tables, R output, and plots with text describing the relationships you see. Include at least one plot and one table. You are encouraged to include more! You must use in-line R calculations/references at least once (e.g. functions like nrow(), mean(), sd(), cor(), median(), min()) and may not hard-code any numbers referenced in your text.*
+
+###### *Your document should be pleasant for a peer to look at, with some organization using sections or lists, and all plots labeled clearly. Use chunk options echo and results to limit the code/output you show in the .html. Discussion of specific values should be summarized in sentences in your text—not as printed code and output—and rounded so as not to be absurdly precise (e.g. round x with round(x, 2)).*
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+setwd("C:/Users/tdnva/Desktop/Spring_2021/R_SocialScience") 
+```
+
+```{r in-line calculations, echo = FALSE}
+mean_fert <- mean(swiss$Fertility)
+mean_ag <- mean(swiss$Agriculture)
+mean_exam <- mean(swiss$Examination)
+mean_edu <- mean(swiss$Education)
+mean_cath <- mean(swiss$Catholic)
+mean_inf.mort <- mean(swiss$Infant.Mortality)
+```
+The Swiss Fertility and Socioeconomic Indicators (1888) data set describes the standardized fertility measure for socioeconomic indicators of `r nrow(swiss)` French-speaking provinces of Switzerland in the year 1888. 
+
+Below is a table of summary statistics for each of the data frame variables:
+```{r tables, echo= FALSE, warning=FALSE}
+library(pander)
+pander(summary(swiss, 5), style = "rmarkdown", split.tables = 120)
+```
+As you can see, the *mean* values of the `r ncol(swiss)` data frame variables:
+
+1) Fertility: `r round(mean_fert, 2)` %
+2) Agriculture: `r round(mean_ag, 2)` %
+3) Examination: `r round(mean_exam, 2)` %
+4) Education: `r round(mean_edu, 2)` %
+5) Catholic: `r round(mean_cath, 2)` %
+6) Infant Mortality: `r round(mean_inf.mort, 2)` %
+
+
+Below is a pairwise comparison of each of the variables in the data set: 
+```{r pairs, echo= FALSE, warning=FALSE}
+pairs(swiss, pch = 8, col = "sienna",
+      main = "Figure 1: Pairwise Comparisions of Swiss Variables")
+```
+
+
+I am interested in estimating the relationship between Fertility and other variables in this data set. Below is a histogram of the variable Fertility:
+
+```{r histogram, echo= FALSE, warning=FALSE}
+# Histogram
+library(ggplot2)
+ggplot(swiss) + 
+  geom_histogram(aes(x=Fertility, y=..density..), 
+                 binwidth=4, colour="white", fill="navy")+
+  xlab('Fertility (%)')+
+  ylab('Density')+
+  labs(title="Figure 2: Histogram of Population Fertility (%)")+
+  annotate(geom="text", x=50, y=0.06, label=paste("Mean =",round(mean_fert, 2)))
+```
+
+
+I then plotted the data on a normal quantile-quantile to visually check the normality of the data:
+
+####        Figure 3: Normal Q-Q Plot
+```{r qq plot, echo = FALSE, warning = FALSE}
+qqnorm(swiss$Fertility, pch = 1, frame = FALSE)
+qqline(swiss$Fertility, col = "steelblue", lwd = 2)
+```
+
+I then estimated a linear regression model that includes `r ncol(swiss) -1` independent variables and `r ncol(swiss) -5` dependent variable (Fertility).
+
+`model_1<-lm(Fertility~Catholic+Agriculture+Examination+Education+Infant.Mortality, data=swiss)`
+
+Below is the R code output from running the model:
+
+```{r lm1, echo= FALSE, warning=FALSE}
+# Examination not significant
+model_1<-lm(Fertility~Catholic+Agriculture+Examination+Education+Infant.Mortality, data=swiss)
+summary(model_1)
+```
+
+
+As you can see, independent variable Examination is not significant, with a p-value of 0.32. I then ran a new model to only include significant variables:
+
+`model_2<-lm(Fertility~Catholic+Agriculture+Education+Infant.Mortality, data=swiss)`
+
+```{r lm2, echo= FALSE, warning=FALSE}
+model_2<-lm(Fertility~Catholic+Agriculture+Education+Infant.Mortality, data=swiss)
+summary(model_2)
+```
+
+My second model, which includes only the `r ncol(swiss) -2` variables of significance indicates that with respect to Fertility, there is a positive linear relationship between two of the independent variables (Catholic and Infant Mortality) and a negative linear relationship between Agriculture and Educaation. My second model is able to explain about 67% of the variance in the data.
